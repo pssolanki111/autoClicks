@@ -4,7 +4,7 @@ import threading as th, time
 import tkinter as tk
 import tkinter.ttk as ttk
 from pynput.mouse import Button, Controller
-from pynput.keyboard import Listener, KeyCode
+from pynput.keyboard import Listener, KeyCode, Key, HotKey
 import shelve as shl
 from PIL import ImageTk, Image
 import tkinter.messagebox as msg
@@ -25,6 +25,10 @@ URL = 'https://www.speedautoclicker.net/'
 
 class GUI:
     def __init__(self, root):
+        """
+        render UI elements. Start workers and manage UI updates
+        :param root: The parent window name
+        """
         self.root = root
         self.root.title('SpeedAutoClicker')
         self.root.geometry('950x350+180+100')
@@ -68,21 +72,38 @@ class GUI:
         # widgets in frame1
         tk.Label(self.ff1, image=img, borderwidth=0, bg='#1b2029').pack(side=tk.TOP)
 
-        tk.Label(self.ff2, image=clickImg, borderwidth=0, bg='#1b2029').pack(side=tk.LEFT, anchor=tk.NW)
-        tk.Label(self.ff2, text='Auto Clicker', bg='#1b2029', fg='#fff',
-                 borderwidth=0, font=('roboto', 15)).pack(side=tk.LEFT, anchor=tk.NE, padx=2)
-        tk.Label(self.ff3, image=updateImg, borderwidth=0,
-                 bg='#1b2029').pack(side=tk.LEFT, anchor=tk.NW, padx=5)
-        tk.Label(self.ff3, text='Updates', borderwidth=0, bg='#1b2029', fg='#fff', font=('roboto', 15)
-                 ).pack(side=tk.LEFT, anchor=tk.NW, pady=10)
-        tk.Label(self.ff4, image=resetImg, borderwidth=0, bg='#1b2029').pack(side=tk.LEFT, anchor=tk.NW, padx=5)
-        tk.Label(self.ff4, text='Reset All', borderwidth=0, bg='#1b2029', fg='#fff', font=('roboto', 15)
-                 ).pack(side=tk.LEFT, anchor=tk.NW, pady=3)
+        clickImgLabel = tk.Label(self.ff2, image=clickImg, borderwidth=0, bg='#1b2029')
+        clickImgLabel.pack(side=tk.LEFT, anchor=tk.NW)
+
+        clickImgLabel2 = tk.Label(self.ff2, text='Auto Clicker', bg='#1b2029', fg='#fff',
+                                  borderwidth=0, font=('roboto', 15))
+        clickImgLabel2.pack(side=tk.LEFT, anchor=tk.NE, padx=2)
+
+        updateLabel = tk.Label(self.ff3, image=updateImg, borderwidth=0, bg='#1b2029')
+        updateLabel.pack(side=tk.LEFT, anchor=tk.NW, padx=5)
+
+        updateLabel2 = tk.Label(self.ff3, text='Updates', borderwidth=0, bg='#1b2029', fg='#fff', font=('roboto', 15))
+        updateLabel2.pack(side=tk.LEFT, anchor=tk.NW, pady=10)
+
+        resetLabel = tk.Label(self.ff4, image=resetImg, borderwidth=0, bg='#1b2029')
+        resetLabel.pack(side=tk.LEFT, anchor=tk.NW, padx=5)
+
+        resetLabel2 = tk.Label(self.ff4, text='Reset All', borderwidth=0, bg='#1b2029', fg='#fff', font=('roboto', 15))
+        resetLabel2.pack(side=tk.LEFT, anchor=tk.NW, pady=3)
 
         # binding events to frame1 children - menu items
-        self.ff2.bind_all('<Button-1>', lambda *args: web_open(URL))
-        self.ff3.bind_all('<Button-1>', lambda *args: web_open(URL))
-        self.ff4.bind_all('<Button-1>', self.reset_prefs)
+        self.ff2.bind('<Button-1>', lambda *args: web_open(URL))
+        self.ff3.bind('<Button-1>', lambda *args: web_open(URL))
+        self.ff4.bind('<Button-1>', self.reset_prefs)
+
+        for label in [clickImgLabel, clickImgLabel2, updateLabel, updateLabel2]:
+            label.bind('<Button-1>', lambda *args: web_open(URL))
+
+        for label in [resetLabel2, resetLabel]:
+            label.bind('<Button-1>', self.reset_prefs)
+
+        # setting focus to primary parent window
+        self.root.focus_set()
 
     def change_colors(self, widgetID):
         if widgetID in ['ff2', 'ff3', 'ff4']:
@@ -93,7 +114,8 @@ class GUI:
             getattr(self, widgetID).config(bg='#1b2029')
 
     def reset_prefs(self, *args):
-        pass
+        print('reset called manually')
+        init_default_config(nt=1)
 
 
 # ============================================================== #
@@ -125,20 +147,47 @@ def set_icon(window):
 
 
 def init_default_config(**kwargs):
+    """
+    Sets the default configuration and writes it to system for persistence.
+    Also runs when Reset All is used...
+    :param kwargs: Optional keyWord arg to specify whenever called from within the UI manually.
+    :return: None
+    """
     if kwargs.get('nt'):
+        with shl.open('data\\config') as config:
+            config['user'] = defaultConfig
         return
+
+    with shl.open('data\\config') as config:
+        config['default'] = defaultConfig
+        config['user'] = defaultConfig
 
 
 # ============================================================== #
 
 
-defaultConfig = {'hotkey': ''}
+defaultConfig = {'hotkey': Key.f7,
+                 'cps': 200,
+                 'mode': 'switch',
+                 'limited': 0,
+                 'limit': 500,
+                 'vary': 0,
+                 'unlimited': 0}
 
 
 # ============================================================== #
 
 
 if __name__ == '__main__':
+    if not os.path.exists('\data\\nft.bat'):
+        init_default_config()
+        try:
+            os.mkdir('data')
+            with open('nft.bat', 'w') as file:
+                pass
+        except OSError:
+            pass
+
     win = tk.Tk()
     set_icon(win)
     img = ImageTk.PhotoImage(Image.open('imgs\img.png'))
