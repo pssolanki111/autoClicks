@@ -31,7 +31,7 @@ elif system() == 'Darwin' or system() == 'Linux':
 
 
 class GUI:
-    def __init__(self, root):
+    def __init__(self, root: tk.Tk):
         """
         renders UI elements, Starts workers and manages UI updates
         :param root: The parent window name
@@ -179,7 +179,7 @@ class GUI:
                                     text='Unlimited' + ' ' * 9, style='White.TCheckbutton', variable=self.unlimited)
         self.LoL2.pack(side=tk.LEFT, anchor=tk.NW, pady=10, ipady=5, padx=5)
 
-        self.val_cmd = self.LoL.register(self.validate_entries)
+        self.val_cmd, self.cps_val = self.LoL.register(self.validate_entries), float(1 / int(temp4))
 
         self.cps = tk.Entry(self.f4, font=('roboto', 10), bg='#193b65', fg='#fff', bd=0, disabledbackground='#1e3553',
                             justify=tk.CENTER, width=23, insertbackground='#fff', validate='key',
@@ -213,9 +213,8 @@ class GUI:
         self.counter.set(0)
 
         tk.Entry(self.f6, width=23, bd=0, bg='#1e3553', fg='#fff', font=('roboto', 10), disabledbackground='#1e3553',
-                 textvariable=self.counter, state=tk.DISABLED, justify=tk.CENTER).pack(side=tk.LEFT, anchor=tk.NW,
-                                                                                       ipady=8, pady=10, padx=10,
-                                                                                       ipadx=1)
+                 textvariable=self.counter, state=tk.DISABLED,
+                 justify=tk.CENTER).pack(side=tk.LEFT, anchor=tk.NW, ipady=8, pady=10, padx=10, ipadx=1)
 
         # binding events to menu items - frame1 children
         self.clickImgLabel2.bind('<Enter>', lambda *args: self.change_colors('clickImgLabel2'))
@@ -249,7 +248,7 @@ class GUI:
         # setting focus to primary parent window
         self.root.focus_set()
 
-    def change_colors(self, widgetID):
+    def change_colors(self, widgetID: str):
         """
         Change colors on hover or click events
         :param widgetID: The widget name - as the attribute name string...
@@ -263,7 +262,7 @@ class GUI:
         if widgetID in ['chooseKeyButton', 'chooseAppsButton']:
             getattr(self, widgetID).config(bg='#337362')
 
-    def reset_colors(self, widgetID):
+    def reset_colors(self, widgetID: str):
         """
         revert colors back to original states on hover or click event termination
         :param widgetID: The widget name - as the attribute name string...
@@ -300,7 +299,7 @@ class GUI:
         """
         pass
 
-    def click_type_changed(self, clickType):
+    def click_type_changed(self, clickType: str):
         """
         Applies the changes when a click type is detected. Saves the prefs.
         :param clickType: Name of new button selected.
@@ -308,7 +307,7 @@ class GUI:
         """
         pass
 
-    def activation_mode_changed(self, mode):
+    def activation_mode_changed(self, mode: str):
         """
         Applies changes when an activation mode change is detected. Saves the prefs.
         :param mode: The new mode selected
@@ -316,7 +315,7 @@ class GUI:
         """
         pass
 
-    def click_rate_changed(self, rate):
+    def click_rate_changed(self, rate: str):
         """
         Applies changes to the click rate when detected. Saves prefs too.
         :param rate: The new rate selected.
@@ -325,7 +324,7 @@ class GUI:
         pass
 
     @staticmethod
-    def validate_entries(name, value):
+    def validate_entries(name: str, value: str):
         try:
             value = int(value)
             return True
@@ -347,7 +346,52 @@ class GUI:
 # ============================================================== #
 
 
-def set_icon(window):
+class MouseClicks(th.Thread):
+    def __init__(self, theGUI: GUI, mouse: Controller):
+        super(MouseClicks, self).__init__()
+        theGUI.cps_val = float(1 / int(theGUI.cps.get()))
+        self.running = False
+        self.mouse = mouse
+
+    def start_clicks(self):
+        self.running = True
+
+    def stop_clicks(self):
+        self.running = False
+
+    def run(self):
+        global gui
+        while 1:
+            while self.running:
+                print('clicking left now')
+                self.mouse.click(getattr(Button, gui.key))
+                time.sleep(gui.cps_val)
+            time.sleep(0.5)
+
+# ============================================================== #
+
+
+def key_pressed(key, listen: Listener, theGUI: GUI, clickTh: MouseClicks):
+    if key == theGUI.hotkey:
+        if clickTh.running:
+            clickTh.stop_clicks()
+        elif not clickTh.running:
+            clickTh.start_clicks()
+    else:
+        print('no hotkey. pressed: ', key)
+
+# ============================================================== #
+
+
+def worker(theGUI, clickTh):
+    with Listener(on_press=lambda event: key_pressed(event, listener, theGUI, clickTh)) as listener:
+        listener.join()
+
+
+# ============================================================== #
+
+
+def set_icon(window: tk.Tk) -> None:
     """
     determines the platform OS and sets the icon file accordingly.
     exits if unable to determine
@@ -416,11 +460,12 @@ defaultConfig = {'hotkey': Key.f7,
                  'vary': 0,
                  'unlimited': 0}
 
+
 # ============================================================== #
 
 
 if __name__ == '__main__':
-    print(get_config())
+    # print(get_config())
     if not os.path.exists('\data\\nft.bat'):
         init_default_config()
         try:
@@ -437,6 +482,11 @@ if __name__ == '__main__':
     updateImg = ImageTk.PhotoImage(Image.open('imgs\\update.png'))
     resetImg = ImageTk.PhotoImage(Image.open('imgs\\reset.png'))
     gui = GUI(win)
+    mouseControl = Controller()
+    clickThread = MouseClicks(gui, mouseControl)
+    clickThread.start()
+    workerThread = th.Thread(target=worker, args=(gui, clickThread,))
+    workerThread.start()
     win.mainloop()
 
 # ============================================================== #
