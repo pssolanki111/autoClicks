@@ -1,12 +1,14 @@
+# this program is just to create an MCVE and to test the detection code. It's not an actual program.
 import threading, time
-from pynput.keyboard import KeyCode, Listener
+from pynput.keyboard import KeyCode, Listener, Key
 from pynput.mouse import Button, Controller
 
-delay = 0.01
-button = Button.left
-start_stop_key = KeyCode(char='s')
+delay = 0.3
+button = Button.right
+start_stop_key = Key.f6
 exit_key = KeyCode(char='e')
 
+held = 0  # declared a global. I know using globals is not a good practice. and this is just an MCVE
 
 class ClickMouse(threading.Thread):
     def __init__(self, delay, button):
@@ -27,6 +29,7 @@ class ClickMouse(threading.Thread):
         self.program_running = False
 
     def run(self):
+        print('about to run')
         while self.program_running:
             while self.running:
                 mouse.click(self.button)
@@ -35,19 +38,36 @@ class ClickMouse(threading.Thread):
 
 mouse = Controller()
 click_thread = ClickMouse(delay, button)
+print('thread created')
 click_thread.start()
+print('\nthread started')
 
 
 def on_press(key):
+    global held
+    print('Key: ', key, ' was held')
     if key == start_stop_key:
+        held = 1
         if click_thread.running:
-            click_thread.stop_clicking()
+            print('already clicking')
+            pass
         else:
+            print('starting clicks')
             click_thread.start_clicking()
     elif key == exit_key:
         click_thread.exit()
         listener.stop()
 
 
-with Listener(on_press=on_press) as listener:
+def on_release(key):
+    global held
+    print('Key: ', key, ' was released')
+    if key == start_stop_key:
+        if held:
+            print('key released. stopping')
+            click_thread.stop_clicking()
+
+
+with Listener(on_press=on_press, on_release=on_release) as listener:
+    print('listener starts')
     listener.join()

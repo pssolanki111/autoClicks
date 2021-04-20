@@ -8,11 +8,11 @@ from pynput.keyboard import Listener, KeyCode, Key, HotKey
 import shelve as shl
 from PIL import ImageTk, Image
 import tkinter.messagebox as msg
-import tooltiptk as ttt
+from random import randint
 from platform import system
 from webbrowser import open as web_open
 from typing import Tuple
-
+import tooltiptk1 as tttk
 
 # ============================================================== #
 # Declarations                                                   #
@@ -20,12 +20,7 @@ from typing import Tuple
 
 
 URL = 'https://www.speedautoclicker.net/'
-
-if system() == 'Windows':
-    SEP = '\\'
-elif system() == 'Darwin' or system() == 'Linux':
-    SEP = '/'
-
+listener = None
 
 # ============================================================== #
 
@@ -37,6 +32,9 @@ class GUI:
         :param root: The parent window name
         :return: You know this already, don't you? of course it's None :D
         """
+        with shl.open(os.path.join('data', 'config')) as cnfig:
+            print('init: ', dict(cnfig))
+
         self.root = root
         self.root.title('SpeedAutoClicker')
         self.root.geometry('940x350+10+10')
@@ -106,7 +104,8 @@ class GUI:
 
         # widgets in frame2
         # widgets in f1 - first row
-        self.hotkeyButton = tk.Button(self.f1, text=self.hotkey.name, bg='#193b65', state=tk.DISABLED,
+        keyName = self.hotkey.name if isinstance(self.hotkey, Key) else self.hotkey
+        self.hotkeyButton = tk.Button(self.f1, text=keyName, bg='#193b65', state=tk.DISABLED,
                                       width=35, font=('roboto', 10), fg='#fff', borderwidth=0)
         self.hotkeyButton.pack(side=tk.LEFT, anchor=tk.NW, padx=10, ipady=7, pady=10)
         self.hotkeyButton.config(disabledforeground='#fff')
@@ -115,24 +114,24 @@ class GUI:
                                          width=20, borderwidth=0, command=self.choose_different_hotkey)
         self.chooseKeyButton.pack(side=tk.LEFT, anchor=tk.NW, pady=10, ipady=7)
 
-        self.chooseAppsButton = tk.Button(self.f1, text='Choose Apps', bg='#184a42', fg='#fff', font=('roboto', 10),
-                                          width=25, borderwidth=0, command=self.choose_apps)
-        self.chooseAppsButton.pack(side=tk.LEFT, anchor=tk.NW, pady=10, ipady=7, padx=10, ipadx=2)
+        self.saveConfigButton = tk.Button(self.f1, text='Save Config', bg='#184a42', fg='#fff', font=('roboto', 10),
+                                          width=25, borderwidth=0, command=self.save_all)
+        self.saveConfigButton.pack(side=tk.LEFT, anchor=tk.NW, pady=10, ipady=7, padx=10, ipadx=2)
 
         # widgets in f2 - second row
         tk.Label(self.f2, text='Mouse Click Type', bg='#242d3c', fg='#fff',
                  font=('roboto', 10)).pack(side=tk.LEFT, anchor=tk.NW, pady=10, padx=10, ipady=4)
 
         self.left = tk.Button(self.f2, text='Left', bg='#184a42', fg='#fff', font=('roboto', 10),
-                              width=20, borderwidth=0, command=self.click_type_changed('left'))
+                              width=20, borderwidth=0, command=lambda *args: self.click_type_changed('left'))
         self.left.pack(side=tk.LEFT, anchor=tk.NW, pady=10, ipady=7)
 
         self.middle = tk.Button(self.f2, text='Middle', bg='#184a42', fg='#fff', font=('roboto', 10),
-                                width=20, borderwidth=0, command=self.click_type_changed('middle'))
+                                width=20, borderwidth=0, command=lambda *args: self.click_type_changed('middle'))
         self.middle.pack(side=tk.LEFT, anchor=tk.NW, pady=10, ipady=7, padx=9)
 
         self.right = tk.Button(self.f2, text='Right', bg='#184a42', fg='#fff', font=('roboto', 10),
-                               width=20, borderwidth=0, command=self.click_type_changed('right'))
+                               width=20, borderwidth=0, command=lambda *args: self.click_type_changed('right'))
         self.right.pack(side=tk.LEFT, anchor=tk.NW, pady=10, ipady=7)
         # just a filler
         tk.Label(self.f2, text='    ', bg='#242d3c').pack(side=tk.LEFT, pady=10)
@@ -144,11 +143,11 @@ class GUI:
                  font=('roboto', 10)).pack(side=tk.LEFT, anchor=tk.NW, pady=10, padx=10, ipady=4)
 
         self.hold = tk.Button(self.f3, text='Hold', bg='#184a42', fg='#fff', font=('roboto', 10),
-                              width=20, borderwidth=0, command=self.activation_mode_changed('hold'))
+                              width=20, borderwidth=0, command=lambda *args: self.activation_mode_changed('hold'))
         self.hold.pack(side=tk.LEFT, anchor=tk.NW, pady=10, ipady=7, padx=10)
 
         self.switch = tk.Button(self.f3, text='Switch', bg='#184a42', fg='#fff', font=('roboto', 10),
-                                width=20, borderwidth=0, command=self.activation_mode_changed('switch'))
+                                width=20, borderwidth=0, command=lambda *args: self.activation_mode_changed('switch'))
         self.switch.pack(side=tk.LEFT, anchor=tk.NW, pady=10, ipady=7)
         # just a filler
         tk.Label(self.f3, text='    ', bg='#242d3c').pack(side=tk.LEFT, pady=10)
@@ -233,6 +232,9 @@ class GUI:
         self.ff3.bind('<Leave>', lambda *args: self.reset_colors('ff3'))
         self.ff4.bind('<Leave>', lambda *args: self.reset_colors('ff4'))
 
+        self.cps.bind('<FocusOut>', lambda *args: self.save_all())
+        self.limit.bind('<FocusOut>', lambda *args: self.save_all())
+
         for label in [clickImgLabel, self.clickImgLabel2, updateLabel, self.updateLabel2]:
             label.bind('<Button-1>', lambda *args: web_open(URL))
 
@@ -241,9 +243,12 @@ class GUI:
 
         # binding events to control panel elements - frame2 children
         self.chooseKeyButton.bind('<Enter>', lambda *args: self.change_colors('chooseKeyButton'))
-        self.chooseAppsButton.bind('<Enter>', lambda *args: self.change_colors('chooseAppsButton'))
+        self.saveConfigButton.bind('<Enter>', lambda *args: self.change_colors('saveConfigButton'))
         self.chooseKeyButton.bind('<Leave>', lambda *args: self.reset_colors('chooseKeyButton'))
-        self.chooseAppsButton.bind('<Leave>', lambda *args: self.reset_colors('chooseAppsButton'))
+        self.saveConfigButton.bind('<Leave>', lambda *args: self.reset_colors('saveConfigButton'))
+
+        # adding Tool tip
+        tttk.CreateToolTip(self.hotkeyButton, 'Press this key to start clicking.\nPress again to stop')
 
         # setting focus to primary parent window
         self.root.focus_set()
@@ -259,7 +264,7 @@ class GUI:
             for child in getattr(self, widgetID).winfo_children():
                 child.config(bg='#000')
 
-        if widgetID in ['chooseKeyButton', 'chooseAppsButton']:
+        if widgetID in ['chooseKeyButton', 'saveConfigButton']:
             getattr(self, widgetID).config(bg='#337362')
 
     def reset_colors(self, widgetID: str):
@@ -273,10 +278,11 @@ class GUI:
             for child in getattr(self, widgetID).winfo_children():
                 child.config(bg='#1b2029')
 
-        if widgetID in ['chooseKeyButton', 'chooseAppsButton']:
+        if widgetID in ['chooseKeyButton', 'saveConfigButton']:
             getattr(self, widgetID).config(bg='#184a42')
 
-    def reset_prefs(self, *args):
+    @staticmethod
+    def reset_prefs(*args):
         """
         resets preferences back to the default configuration.
         :param args: Just a filler to handle the event passed in by tcl on _button_press event
@@ -290,7 +296,40 @@ class GUI:
         Allows the user to select a different hotkey to start/stop the clicker.
         :return: why would you even look for a return value in such method? like, come on!
         """
-        pass
+        def cancel_choose_hotkey():
+            """
+            executes when user cancels the selection of a new hotkey
+            :return: Why the flip would it return anything 👀 ?
+            """
+            global listener
+            keyName = self.hotkey.name if isinstance(self.hotkey, Key) else self.hotkey
+            self.chooseKeyButton.config(text='Choose Button', command=self.choose_different_hotkey)
+            self.hotkeyButton.config(text=keyName)
+            listener.stop()
+            th.Thread(target=worker, args=(self, clickThread,), daemon=True).start()
+            return
+
+        def look_for_hotkey():
+            def detect_key(k):
+                self.hotkey = k
+                self.save_all()
+                keyName = self.hotkey.name if isinstance(self.hotkey, Key) else self.hotkey
+                self.chooseKeyButton.config(text='Choose Button', command=self.choose_different_hotkey)
+                self.hotkeyButton.config(text=keyName)
+                return False
+
+            global listener
+            listener.stop()
+            with Listener(on_press=detect_key) as listener:
+                listener.join()
+
+            th.Thread(target=worker, args=(self, clickThread,), daemon=True).start()
+
+        self.chooseKeyButton.config(text='Cancel Choose', command=cancel_choose_hotkey)
+        self.hotkeyButton.config(text='Press Button')
+        hotKeyThread = th.Thread(target=look_for_hotkey)
+        hotKeyThread.daemon = True
+        hotKeyThread.start()
 
     def choose_apps(self):
         """
@@ -301,10 +340,18 @@ class GUI:
 
     def click_type_changed(self, clickType: str):
         """
-        Applies the changes when a click type is detected. Saves the prefs.
+        Applies the changes when a click type (what mouse button) change is detected. Saves the prefs.
         :param clickType: Name of new button selected.
         :return: None
         """
+        for button in ['left', 'middle', 'right']:
+            if button == clickType:
+                getattr(self, button).config(bg='#337362')
+            else:
+                getattr(self, button).config(bg='#184a42')
+
+        self.key = clickType
+        self.save_all()
         pass
 
     def activation_mode_changed(self, mode: str):
@@ -313,6 +360,14 @@ class GUI:
         :param mode: The new mode selected
         :return: None
         """
+        for button in ['hold', 'switch']:
+            if button == mode:
+                getattr(self, button).config(bg='#337362')
+            else:
+                getattr(self, button).config(bg='#184a42')
+
+        self.mode = mode
+        self.save_all()
         pass
 
     def click_rate_changed(self, rate: str):
@@ -321,7 +376,19 @@ class GUI:
         :param rate: The new rate selected.
         :return: Of course it's None.
         """
-        pass
+        self.save_all()
+        hotkey, cps, mode, limited, limit, vary, unlimited, key = get_config()
+
+        if vary:
+            self.LoL2.config(state=tk.DISABLED)
+            self.cps.config(state=tk.DISABLED)
+        elif unlimited:
+            self.LoL.config(state=tk.DISABLED)
+            self.cps.config(state=tk.DISABLED)
+        else:
+            self.LoL.config(state=tk.NORMAL)
+            self.LoL2.config(state=tk.NORMAL)
+            self.cps.config(state=tk.NORMAL)
 
     @staticmethod
     def validate_entries(name: str, value: str):
@@ -333,6 +400,8 @@ class GUI:
 
     def save_all(self):
         with shl.open(os.path.join('data', 'config')) as config:
+            print('config already: ', dict(config))
+
             config['user'] = {'hotkey': self.hotkey,
                               'key': self.key,
                               'cps': int(self.cps.get()),
@@ -342,6 +411,17 @@ class GUI:
                               'vary': int(self.vary.get()),
                               'unlimited': int(self.unlimited.get())}
 
+            print('config after changed: ', dict(config))
+
+    def click_limit_changed(self, newLimit: str):
+        self.save_all()
+        hotkey, cps, mode, limited, limit, vary, unlimited, key = get_config()
+
+        if limited:
+            self.limit.config(state=tk.NORMAL)
+        elif not limited:
+            self.limit.config(state=tk.DISABLED)
+
 
 # ============================================================== #
 
@@ -349,9 +429,10 @@ class GUI:
 class MouseClicks(th.Thread):
     def __init__(self, theGUI: GUI, mouse: Controller):
         super(MouseClicks, self).__init__()
-        theGUI.cps_val = float(1 / int(theGUI.cps.get()))
+        # theGUI.cps_val = float(1 / int(theGUI.cps.get()))
         self.running = False
         self.mouse = mouse
+        self.daemon = True
 
     def start_clicks(self):
         self.running = True
@@ -363,9 +444,51 @@ class MouseClicks(th.Thread):
         global gui
         while 1:
             while self.running:
-                print('clicking left now')
-                self.mouse.click(getattr(Button, gui.key))
-                time.sleep(gui.cps_val)
+                # logging.warn('clicking left now')
+                hotkey, cps, mode, limited, limit, vary, unlimited, key = get_config()
+
+                if vary:
+                    # varying CPS
+                    print('varying cps applied')
+                    cps_s = randint(5, 200)
+                    self.mouse.click(getattr(Button, key))
+                    time.sleep(float(1 / cps_s))
+                    gui.counter.set(gui.counter.get() + 1)
+
+                    if limited:
+                        # there is a limit
+                        print('limited. varying')
+                        if gui.counter.get() >= int(limit):  # Limit Reached
+                            print('limited. varying. gotta stop')
+                            self.stop_clicks()
+
+                    continue
+
+                elif unlimited:
+                    # Unlimited CPS.
+                    print('unlimited cps detected')
+                    self.mouse.click(getattr(Button, gui.key))
+                    gui.counter.set(gui.counter.get() + 1)
+
+                    if limited:
+                        # There is a limit
+                        if gui.counter.get() >= int(limit):  # limit reached
+                            print('unlimited. gotta stop')
+                            self.stop_clicks()
+
+                    continue
+
+                # Normal clicks
+                self.mouse.click(getattr(Button, key))
+                print('normal clicks')
+                time.sleep(float(1 / int(cps)))
+                gui.counter.set(gui.counter.get() + 1)
+
+                if limited:
+                    if gui.counter.get() >= int(limit):
+                        print('normal clicks. gotta stop')
+                        self.stop_clicks()
+
             time.sleep(0.5)
 
 # ============================================================== #
@@ -384,6 +507,7 @@ def key_pressed(key, listen: Listener, theGUI: GUI, clickTh: MouseClicks):
 
 
 def worker(theGUI, clickTh):
+    global listener
     with Listener(on_press=lambda event: key_pressed(event, listener, theGUI, clickTh)) as listener:
         listener.join()
 
@@ -465,15 +589,15 @@ defaultConfig = {'hotkey': Key.f7,
 
 
 if __name__ == '__main__':
-    # print(get_config())
-    if not os.path.exists('\data\\nft.bat'):
-        init_default_config()
-        try:
-            os.mkdir('data')
-            with open('nft.bat', 'w') as file:
-                pass
-        except OSError:
-            pass
+    # # print(get_config())
+    # if not os.path.exists('\data\\nft.bat'):
+    #     init_default_config()
+    #     try:
+    #         os.mkdir('data')
+    #         with open('nft.bat', 'w') as file:
+    #             pass
+    #     except OSError:
+    #         pass
 
     win = tk.Tk()
     set_icon(win)
@@ -486,6 +610,7 @@ if __name__ == '__main__':
     clickThread = MouseClicks(gui, mouseControl)
     clickThread.start()
     workerThread = th.Thread(target=worker, args=(gui, clickThread,))
+    workerThread.daemon = True
     workerThread.start()
     win.mainloop()
 
