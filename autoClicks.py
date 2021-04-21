@@ -578,13 +578,13 @@ def set_icon(window: tk.Tk) -> None:
     :return: None
     """
     if system() == 'Linux':
-        window.iconbitmap('imgs\\logo.xbm')
+        window.iconbitmap(os.path.join('imgs', 'logo.xbm'))
 
     elif system() == 'Windows':
-        window.iconbitmap('imgs\\logo.ico')
+        window.iconbitmap(os.path.join('imgs', 'logo.ico'))
 
     elif system() == 'Darwin':
-        window.iconbitmap('imgs\\logo.icons')
+        window.iconbitmap(os.path.join('imgs', 'logo.icns'))
 
     else:
         msg.showerror('Could not determine the Platform OS',
@@ -644,22 +644,22 @@ defaultConfig = {'hotkey': Key.f7,
 
 
 if __name__ == '__main__':
-    # # print(get_config())
-    # if not os.path.exists('\data\\nft.bat'):
-    #     init_default_config()
-    #     try:
-    #         os.mkdir('data')
-    #         with open('nft.bat', 'w') as file:
-    #             pass
-    #     except OSError:
-    #         pass
+    if not os.path.exists(os.path.join('data', 'nft.bat')):
+        print('first run')
+        init_default_config()
+        try:
+            os.mkdir('data')
+            with open(os.path.join('data', 'nft.bat'), 'w') as file:
+                pass
+        except Exception as e:
+            print(e)
 
     win = tk.Tk()
     set_icon(win)
-    img = ImageTk.PhotoImage(Image.open('imgs\img.png'))
-    clickImg = ImageTk.PhotoImage(Image.open('imgs\clicks.png'))
-    updateImg = ImageTk.PhotoImage(Image.open('imgs\\update.png'))
-    resetImg = ImageTk.PhotoImage(Image.open('imgs\\reset.png'))
+    img = ImageTk.PhotoImage(Image.open(os.path.join('imgs', 'img.png')))
+    clickImg = ImageTk.PhotoImage(Image.open(os.path.join('imgs', 'clicks.png')))
+    updateImg = ImageTk.PhotoImage(Image.open(os.path.join('imgs', 'update.png')))
+    resetImg = ImageTk.PhotoImage(Image.open(os.path.join('imgs', 'reset.png')))
     gui = GUI(win)
     mouseControl = Controller()
     clickThread = MouseClicks(gui, mouseControl)
