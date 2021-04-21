@@ -20,7 +20,7 @@ import tooltiptk1 as tttk
 
 
 URL = 'https://www.speedautoclicker.net/'
-listener = None
+listener, held = None, 0
 
 # ============================================================== #
 
@@ -360,6 +360,13 @@ class GUI:
         :param mode: The new mode selected
         :return: None
         """
+        global listener
+
+        hotkey, cps, mode_s, limited, limit, vary, unlimited, key = get_config()
+
+        self.mode = mode
+        self.save_all()
+
         for button in ['hold', 'switch']:
             if button == mode:
                 getattr(self, button).config(bg='#337362')
@@ -367,8 +374,18 @@ class GUI:
                 getattr(self, button).config(bg='#184a42')
 
         self.mode = mode
-        self.save_all()
-        pass
+
+        if mode != mode_s:
+            if mode == 'hold':
+                listener.stop()
+                th.Thread(target=hold_worker, daemon=True).start()
+
+            elif mode == 'switch':
+                listener.stop()
+                th.Thread(target=worker, args=(self, clickThread,), daemon=True).start()
+
+        elif mode == mode_s:
+            pass
 
     def click_rate_changed(self, rate: str):
         """
@@ -507,10 +524,48 @@ def key_pressed(key, listen: Listener, theGUI: GUI, clickTh: MouseClicks):
 
 
 def worker(theGUI, clickTh):
+    print('worker starts')
     global listener
     with Listener(on_press=lambda event: key_pressed(event, listener, theGUI, clickTh)) as listener:
         listener.join()
 
+
+# ============================================================== #
+
+
+def key_held(key):
+    global held, clickThread, gui
+
+    if key == gui.hotkey:
+        held = 1
+        if clickThread.running:
+            print('already clicking')
+            pass
+        else:
+            print('starting clicks')
+            clickThread.start_clicks()
+
+
+# ============================================================== #
+
+
+def key_released(key):
+    global held, clickThread, gui
+
+    if key == gui.hotkey:
+        if held:
+            print('key released. stopping')
+            clickThread.stop_clicks()
+
+
+# ============================================================== #
+
+
+def hold_worker():
+    print('hold worker starts')
+    global listener
+    with Listener(on_press=key_held, on_release=key_released) as listener:
+        listener.join()
 
 # ============================================================== #
 

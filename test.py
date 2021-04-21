@@ -3,9 +3,9 @@ import threading, time
 from pynput.keyboard import KeyCode, Listener, Key
 from pynput.mouse import Button, Controller
 
-delay = 0.3
-button = Button.right
-start_stop_key = Key.f6
+delay = 0.2
+button = Button.left
+start_stop_key = Key.f8
 exit_key = KeyCode(char='e')
 
 held = 0  # declared a global. I know using globals is not a good practice. and this is just an MCVE
@@ -14,6 +14,7 @@ class ClickMouse(threading.Thread):
     def __init__(self, delay, button):
         super(ClickMouse, self).__init__()
         self.delay = delay
+        self.daemon = True
         self.button = button
         self.running = False
         self.program_running = True
@@ -34,6 +35,7 @@ class ClickMouse(threading.Thread):
             while self.running:
                 mouse.click(self.button)
                 time.sleep(self.delay)
+            time.sleep(0.2)
 
 
 mouse = Controller()
