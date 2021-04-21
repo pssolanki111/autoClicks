@@ -4,7 +4,7 @@ import threading as th, time
 import tkinter as tk
 import tkinter.ttk as ttk
 from pynput.mouse import Button, Controller
-from pynput.keyboard import Listener, KeyCode, Key, HotKey
+from pynput.keyboard import Listener, Key
 import shelve as shl
 from PIL import ImageTk, Image
 import tkinter.messagebox as msg
@@ -32,8 +32,6 @@ class GUI:
         :param root: The parent window name
         :return: You know this already, don't you? of course it's None :D
         """
-        with shl.open(os.path.join('data', 'config')) as cnfig:
-            print('init: ', dict(cnfig))
 
         self.root = root
         self.root.title('SpeedAutoClicker')
@@ -253,7 +251,7 @@ class GUI:
         # setting focus to primary parent window
         self.root.focus_set()
 
-    def change_colors(self, widgetID: str):
+    def change_colors(self, widgetID: str) -> None:
         """
         Change colors on hover or click events
         :param widgetID: The widget name - as the attribute name string...
@@ -267,10 +265,10 @@ class GUI:
         if widgetID in ['chooseKeyButton', 'saveConfigButton']:
             getattr(self, widgetID).config(bg='#337362')
 
-    def reset_colors(self, widgetID: str):
+    def reset_colors(self, widgetID: str) -> None:
         """
         revert colors back to original states on hover or click event termination
-        :param widgetID: The widget name - as the attribute name string...
+        :param widgetID: The widget ID - as the attribute name string...
         :return: None
         """
         if widgetID in ['clickImgLabel2', 'updateLabel2', 'resetLabel2', 'ff2', 'ff3', 'ff4']:
@@ -282,7 +280,7 @@ class GUI:
             getattr(self, widgetID).config(bg='#184a42')
 
     @staticmethod
-    def reset_prefs(*args):
+    def reset_prefs(*args) -> None:
         """
         resets preferences back to the default configuration.
         :param args: Just a filler to handle the event passed in by tcl on _button_press event
@@ -291,12 +289,12 @@ class GUI:
         print('reset called manually')
         init_default_config(nt=1)
 
-    def choose_different_hotkey(self):
+    def choose_different_hotkey(self) -> None:
         """
         Allows the user to select a different hotkey to start/stop the clicker.
         :return: why would you even look for a return value in such method? like, come on!
         """
-        def cancel_choose_hotkey():
+        def cancel_choose_hotkey() -> None:
             """
             executes when user cancels the selection of a new hotkey
             :return: Why the flip would it return anything 👀 ?
@@ -309,8 +307,14 @@ class GUI:
             th.Thread(target=worker, args=(self, clickThread,), daemon=True).start()
             return
 
-        def look_for_hotkey():
-            def detect_key(k):
+        def look_for_hotkey() -> None:
+            """start a listener to detect the very first <KeyPress> and saves it as new hotkey"""
+            def detect_key(k) -> bool:
+                """
+                The callback for the listener.
+                :param k: The key pressed. Must be an instance of pynput.keyboard.Key or pynput.keyboard.KeyCode
+                :return: A Boolean to stop the listener as the hotkey has been chosen
+                """
                 self.hotkey = k
                 self.save_all()
                 keyName = self.hotkey.name if isinstance(self.hotkey, Key) else self.hotkey
@@ -331,16 +335,9 @@ class GUI:
         hotKeyThread.daemon = True
         hotKeyThread.start()
 
-    def choose_apps(self):
+    def click_type_changed(self, clickType: str) -> None:
         """
-        Let's the user select application to be affected by clicker action
-        :return: None again LoL
-        """
-        pass
-
-    def click_type_changed(self, clickType: str):
-        """
-        Applies the changes when a click type (what mouse button) change is detected. Saves the prefs.
+        Applies the changes when a click type (which mouse button) change is detected. Saves the prefs.
         :param clickType: Name of new button selected.
         :return: None
         """
@@ -354,7 +351,7 @@ class GUI:
         self.save_all()
         pass
 
-    def activation_mode_changed(self, mode: str):
+    def activation_mode_changed(self, mode: str) -> None:
         """
         Applies changes when an activation mode change is detected. Saves the prefs.
         :param mode: The new mode selected
@@ -387,7 +384,7 @@ class GUI:
         elif mode == mode_s:
             pass
 
-    def click_rate_changed(self, rate: str):
+    def click_rate_changed(self, rate: str) -> None:
         """
         Applies changes to the click rate when detected. Saves prefs too.
         :param rate: The new rate selected.
@@ -408,14 +405,25 @@ class GUI:
             self.cps.config(state=tk.NORMAL)
 
     @staticmethod
-    def validate_entries(name: str, value: str):
+    def validate_entries(name: str, value: str) -> bool:
+        """
+        Registered validation handler for Entry boxes to prevent entering non-digit characters. Discards changes if
+        input is not a valid number
+        :param name: widget Name
+        :param value: Values of the Entry after the modification
+        :return: A Boolean: True if input state is valid, False otherwise.
+        """
         try:
             value = int(value)
             return True
         except ValueError:
             return False
 
-    def save_all(self):
+    def save_all(self) -> None:
+        """
+        You guessed it right :) Saves EVERYTHING...
+        :return: Nope
+        """
         with shl.open(os.path.join('data', 'config')) as config:
             print('config already: ', dict(config))
 
@@ -430,7 +438,12 @@ class GUI:
 
             print('config after changed: ', dict(config))
 
-    def click_limit_changed(self, newLimit: str):
+    def click_limit_changed(self, newLimit: str) -> None:
+        """
+        Callback when a change in Click Limit Changes
+        :param newLimit: The New Limit Type (1/0)
+        :return: Really? You need a return value from this callback?
+        """
         self.save_all()
         hotkey, cps, mode, limited, limit, vary, unlimited, key = get_config()
 
@@ -444,20 +457,40 @@ class GUI:
 
 
 class MouseClicks(th.Thread):
+    """
+    The Primary Click Thread
+    """
     def __init__(self, theGUI: GUI, mouse: Controller):
+        """
+        Just initializes the Click Thread. Sets as daemon
+        :param theGUI: An instance of class GUI
+        :param mouse: An instance of class pynput.mouse.Controller
+        """
         super(MouseClicks, self).__init__()
         # theGUI.cps_val = float(1 / int(theGUI.cps.get()))
         self.running = False
         self.mouse = mouse
         self.daemon = True
 
-    def start_clicks(self):
+    def start_clicks(self) -> None:
+        """
+        Sets the Flag
+        :return: None
+        """
         self.running = True
 
-    def stop_clicks(self):
+    def stop_clicks(self) -> None:
+        """
+        Resets the flag
+        :return: None
+        """
         self.running = False
 
-    def run(self):
+    def run(self) -> None:
+        """
+        Run method for th.Thread instance. Performs the clicks based on keyBoard events received from Listeners
+        :return: None
+        """
         global gui
         while 1:
             while self.running:
@@ -511,7 +544,15 @@ class MouseClicks(th.Thread):
 # ============================================================== #
 
 
-def key_pressed(key, listen: Listener, theGUI: GUI, clickTh: MouseClicks):
+def key_pressed(key, listen: Listener, theGUI: GUI, clickTh: MouseClicks) -> None:
+    """
+    Callback for <KeyPress> Events on primary worker - switch mechanism
+    :param key: The Key Pressed. Must be an instance of pynput.keyboard.Key or pynput.keyboard.KeyCode
+    :param listen: An instance of pynput.keyboard.Listener.
+    :param theGUI: An instance of class GUI
+    :param clickTh: An instance of class MouseClicks
+    :return: None
+    """
     if key == theGUI.hotkey:
         if clickTh.running:
             clickTh.stop_clicks()
@@ -523,7 +564,13 @@ def key_pressed(key, listen: Listener, theGUI: GUI, clickTh: MouseClicks):
 # ============================================================== #
 
 
-def worker(theGUI, clickTh):
+def worker(theGUI: GUI, clickTh: MouseClicks) -> None:
+    """
+    Worker thread for switch mechanism (The default).
+    :param theGUI: An instance of class GUI
+    :param clickTh: An instance of class MouseClicks
+    :return:
+    """
     print('worker starts')
     global listener
     with Listener(on_press=lambda event: key_pressed(event, listener, theGUI, clickTh)) as listener:
@@ -533,7 +580,12 @@ def worker(theGUI, clickTh):
 # ============================================================== #
 
 
-def key_held(key):
+def key_held(key) -> None:
+    """
+    Callback for <KeyPress> events - Hold mechanism
+    :param key: The Key Pressed. Must be an instance of pynput.keyboard.Key or pynput.keyboard.KeyCode
+    :return: None
+    """
     global held, clickThread, gui
 
     if key == gui.hotkey:
@@ -549,7 +601,12 @@ def key_held(key):
 # ============================================================== #
 
 
-def key_released(key):
+def key_released(key) -> None:
+    """
+    Callback for <KeyRelease> events - Hold mechanism
+    :param key: The Key Released. Must be an instance of pynput.keyboard.Key or pynput.keyboard.KeyCode
+    :return: Obviously None LoL
+    """
     global held, clickThread, gui
 
     if key == gui.hotkey:
@@ -561,8 +618,11 @@ def key_released(key):
 # ============================================================== #
 
 
-def hold_worker():
-    print('hold worker starts')
+def hold_worker() -> None:
+    """
+    Worker Thread for Hold mechanism listener.
+    :return: None
+    """
     global listener
     with Listener(on_press=key_held, on_release=key_released) as listener:
         listener.join()
@@ -595,7 +655,7 @@ def set_icon(window: tk.Tk) -> None:
 # ============================================================== #
 
 
-def init_default_config(**kwargs):
+def init_default_config(**kwargs) -> None:
     """
     Sets the default configuration and writes it to system for persistence.
     Also runs when Reset All is used...
@@ -644,6 +704,7 @@ defaultConfig = {'hotkey': Key.f7,
 
 
 if __name__ == '__main__':
+    # Let The Fun Begin...
     if not os.path.exists(os.path.join('data', 'nft.bat')):
         print('first run')
         init_default_config()
