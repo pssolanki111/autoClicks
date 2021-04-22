@@ -12,7 +12,7 @@ from random import randint
 from platform import system
 from webbrowser import open as web_open
 from typing import Tuple
-import tooltiptk1 as tttk
+# import tooltiptk1 as tttk
 
 # ============================================================== #
 # Declarations                                                   #
@@ -35,7 +35,7 @@ class GUI:
 
         self.root = root
         self.root.title('SpeedAutoClicker')
-        self.root.geometry('940x350+10+10')
+        # self.root.geometry('940x350+10+10')
         self.root.resizable(0, 0)
         self.root.config(bg='#1b2029')
 
@@ -104,20 +104,22 @@ class GUI:
         # widgets in f1 - first row
         keyName = self.hotkey.name if isinstance(self.hotkey, Key) else self.hotkey
         self.hotkeyButton = tk.Button(self.f1, text=keyName, bg='#193b65', state=tk.DISABLED,
-                                      width=35, font=('roboto', 10), fg='#fff', borderwidth=0)
+                                      width=37, font=('roboto', 10), fg='#fff', borderwidth=0)
         self.hotkeyButton.pack(side=tk.LEFT, anchor=tk.NW, padx=10, ipady=7, pady=10)
         self.hotkeyButton.config(disabledforeground='#fff')
 
         self.chooseKeyButton = tk.Button(self.f1, text='Choose Button', bg='#184a42', fg='#fff', font=('roboto', 10),
-                                         width=20, borderwidth=0, command=self.choose_different_hotkey)
+                                         width=21, borderwidth=0, command=self.choose_different_hotkey)
         self.chooseKeyButton.pack(side=tk.LEFT, anchor=tk.NW, pady=10, ipady=7)
 
         self.saveConfigButton = tk.Button(self.f1, text='Save Config', bg='#184a42', fg='#fff', font=('roboto', 10),
-                                          width=25, borderwidth=0, command=self.save_all)
+                                          width=21, borderwidth=0, command=self.save_all)
         self.saveConfigButton.pack(side=tk.LEFT, anchor=tk.NW, pady=10, ipady=7, padx=10, ipadx=2)
+        # just a filler
+        tk.Label(self.f1, text='', bg='#242d3c').pack(side=tk.LEFT, pady=10)
 
         # widgets in f2 - second row
-        tk.Label(self.f2, text='Mouse Click Type', bg='#242d3c', fg='#fff',
+        tk.Label(self.f2, text='Mouse Click Type'+' '*5, bg='#242d3c', fg='#fff',
                  font=('roboto', 10)).pack(side=tk.LEFT, anchor=tk.NW, pady=10, padx=10, ipady=4)
 
         self.left = tk.Button(self.f2, text='Left', bg='#184a42', fg='#fff', font=('roboto', 10),
@@ -125,11 +127,11 @@ class GUI:
         self.left.pack(side=tk.LEFT, anchor=tk.NW, pady=10, ipady=7)
 
         self.middle = tk.Button(self.f2, text='Middle', bg='#184a42', fg='#fff', font=('roboto', 10),
-                                width=20, borderwidth=0, command=lambda *args: self.click_type_changed('middle'))
+                                width=21, borderwidth=0, command=lambda *args: self.click_type_changed('middle'))
         self.middle.pack(side=tk.LEFT, anchor=tk.NW, pady=10, ipady=7, padx=9)
 
         self.right = tk.Button(self.f2, text='Right', bg='#184a42', fg='#fff', font=('roboto', 10),
-                               width=20, borderwidth=0, command=lambda *args: self.click_type_changed('right'))
+                               width=21, borderwidth=0, command=lambda *args: self.click_type_changed('right'))
         self.right.pack(side=tk.LEFT, anchor=tk.NW, pady=10, ipady=7)
         # just a filler
         tk.Label(self.f2, text='    ', bg='#242d3c').pack(side=tk.LEFT, pady=10)
@@ -137,15 +139,15 @@ class GUI:
         getattr(self, self.key).config(bg='#337362')
 
         # widgets in f3 - third row
-        tk.Label(self.f3, text='Activation Mode' + ' ' * 44, bg='#242d3c', fg='#fff',
+        tk.Label(self.f3, text='Activation Mode' + ' ' * 56, bg='#242d3c', fg='#fff',
                  font=('roboto', 10)).pack(side=tk.LEFT, anchor=tk.NW, pady=10, padx=10, ipady=4)
 
         self.hold = tk.Button(self.f3, text='Hold', bg='#184a42', fg='#fff', font=('roboto', 10),
-                              width=20, borderwidth=0, command=lambda *args: self.activation_mode_changed('hold'))
+                              width=21, borderwidth=0, command=lambda *args: self.activation_mode_changed('hold'))
         self.hold.pack(side=tk.LEFT, anchor=tk.NW, pady=10, ipady=7, padx=10)
 
         self.switch = tk.Button(self.f3, text='Switch', bg='#184a42', fg='#fff', font=('roboto', 10),
-                                width=20, borderwidth=0, command=lambda *args: self.activation_mode_changed('switch'))
+                                width=21, borderwidth=0, command=lambda *args: self.activation_mode_changed('switch'))
         self.switch.pack(side=tk.LEFT, anchor=tk.NW, pady=10, ipady=7)
         # just a filler
         tk.Label(self.f3, text='    ', bg='#242d3c').pack(side=tk.LEFT, pady=10)
@@ -153,8 +155,8 @@ class GUI:
         getattr(self, self.mode).config(bg='#337362')
 
         # widgets in f4 - row 4
-        tk.Label(self.f4, text='Click Rate' + ' ' * 25, bg='#242d3c', fg='#fff',
-                 font=('roboto', 10)).pack(side=tk.LEFT, anchor=tk.NW, pady=10, padx=10, ipady=4)
+        tk.Label(self.f4, text='Click Rate' + ' ' * 42, bg='#242d3c', fg='#fff',
+                 font=('roboto', 10)).pack(side=tk.LEFT, anchor=tk.NW, pady=10, padx=10, ipady=7)
 
         temp, temp2, temp3, temp4, temp5 = self.vary, self.limited, self.unlimited, self.cps, self.limit
         self.vary, self.limited, self.unlimited = tk.IntVar(self.root), tk.IntVar(self.root), tk.IntVar(self.root)
@@ -170,11 +172,11 @@ class GUI:
 
         self.LoL = ttk.Checkbutton(self.f4, command=lambda *args: self.click_rate_changed('vary'),
                                    text='Variation (Anti-Detection)', style='White.TCheckbutton', variable=self.vary)
-        self.LoL.pack(side=tk.LEFT, anchor=tk.NW, pady=10, ipady=5)
+        self.LoL.pack(side=tk.LEFT, anchor=tk.NW, pady=10, ipady=7)
 
         self.LoL2 = ttk.Checkbutton(self.f4, command=lambda *args: self.click_rate_changed('unlimited'),
                                     text='Unlimited' + ' ' * 9, style='White.TCheckbutton', variable=self.unlimited)
-        self.LoL2.pack(side=tk.LEFT, anchor=tk.NW, pady=10, ipady=5, padx=5)
+        self.LoL2.pack(side=tk.LEFT, anchor=tk.NW, pady=10, ipady=7, padx=5)
 
         self.val_cmd, self.cps_val = self.LoL.register(self.validate_entries), float(1 / int(temp4))
 
@@ -183,14 +185,16 @@ class GUI:
                             validatecommand=(self.val_cmd, '%W', '%P'))
         self.cps.pack(side=tk.LEFT, anchor=tk.NW, pady=10, padx=5, ipady=7)
         self.cps.insert(0, str(temp4))
+        # just a filler
+        tk.Label(self.f4, text='   ', bg='#242d3c').pack(side=tk.LEFT, pady=10)
 
         # widgets in f5 - row 5
-        tk.Label(self.f5, text='Click Limitation' + ' ' * 60, bg='#242d3c', fg='#fff',
-                 font=('roboto', 10)).pack(side=tk.LEFT, anchor=tk.NW, pady=10, padx=10, ipady=4)
+        tk.Label(self.f5, text='Click Limitation' + ' ' * 81, bg='#242d3c', fg='#fff',
+                 font=('roboto', 10)).pack(side=tk.LEFT, anchor=tk.NW, pady=10, padx=10, ipady=7)
 
         self.LoL3 = ttk.Checkbutton(self.f5, text='Active' + ' ' * 14, command=lambda *args: self.click_limit_changed(
             'limited'), style='White.TCheckbutton', variable=self.limited)
-        self.LoL3.pack(side=tk.LEFT, anchor=tk.NW, pady=10, ipady=5, padx=5)
+        self.LoL3.pack(side=tk.LEFT, anchor=tk.NW, pady=10, ipady=7, padx=5)
 
         self.limit = tk.Entry(self.f5, font=('roboto', 10), bg='#193b65', fg='#fff', bd=0, disabledbackground='#1e3553',
                               justify=tk.CENTER, width=22, insertbackground='#fff', validate='key',
@@ -198,20 +202,24 @@ class GUI:
 
         self.limit.pack(side=tk.LEFT, anchor=tk.NW, pady=10, padx=5, ipady=7, ipadx=2)
         self.limit.insert(0, str(temp5))
+        # just a filler
+        tk.Label(self.f5, text='    ', bg='#242d3c').pack(side=tk.LEFT, pady=10)
 
         if not self.limited.get():
             self.limit.config(state=tk.DISABLED)
 
         # widgets in f6 - row 6
-        tk.Label(self.f6, text=' ' * 88 + 'Currently' + ' ' * 12, bg='#242d3c', fg='#fff',
-                 font=('roboto', 10)).pack(side=tk.LEFT, anchor=tk.NW, pady=10, padx=10, ipady=4)
+        tk.Label(self.f6, text=' ' * 108 + 'Currently' + ' ' * 12, bg='#242d3c', fg='#fff',
+                 font=('roboto', 10)).pack(side=tk.LEFT, anchor=tk.NW, pady=10, padx=10, ipady=7)
 
         self.counter = tk.IntVar()
         self.counter.set(0)
 
-        tk.Entry(self.f6, width=23, bd=0, bg='#1e3553', fg='#fff', font=('roboto', 10), disabledbackground='#1e3553',
+        tk.Entry(self.f6, width=22, bd=0, bg='#1e3553', fg='#fff', font=('roboto', 10), disabledbackground='#1e3553',
                  textvariable=self.counter, state=tk.DISABLED,
-                 justify=tk.CENTER).pack(side=tk.LEFT, anchor=tk.NW, ipady=8, pady=10, padx=10, ipadx=1)
+                 justify=tk.CENTER).pack(side=tk.LEFT, anchor=tk.NW, ipady=9, pady=10, padx=10, ipadx=2)
+        # just a filler
+        tk.Label(self.f6, text='   ', bg='#242d3c').pack(side=tk.LEFT, pady=10)
 
         # binding events to menu items - frame1 children
         self.clickImgLabel2.bind('<Enter>', lambda *args: self.change_colors('clickImgLabel2'))
@@ -246,7 +254,7 @@ class GUI:
         self.saveConfigButton.bind('<Leave>', lambda *args: self.reset_colors('saveConfigButton'))
 
         # adding Tool tip
-        tttk.CreateToolTip(self.hotkeyButton, 'Press this key to start clicking.\nPress again to stop')
+        # tttk.CreateToolTip(self.hotkeyButton, 'Press this key to start clicking.\nPress again to stop')
 
         # setting focus to primary parent window
         self.root.focus_set()
@@ -357,12 +365,14 @@ class GUI:
         :param mode: The new mode selected
         :return: None
         """
-        global listener
+        global listener, clickThread
 
         hotkey, cps, mode_s, limited, limit, vary, unlimited, key = get_config()
 
         self.mode = mode
         self.save_all()
+
+        clickThread.stop_clicks()
 
         for button in ['hold', 'switch']:
             if button == mode:
@@ -638,8 +648,9 @@ def set_icon(window: tk.Tk) -> None:
     :return: None
     """
     if system() == 'Linux':
-        window.iconbitmap(os.path.join('imgs', 'logo.xbm'))
-
+        # window.iconbitmap(os.path.join('imgs', 'logo.xbm'))
+        logo = tk.Image('photo', file=os.path.join('imgs', 'img.PNG'))
+        window.tk.call('wm', 'iconphoto', window._w, logo)
     elif system() == 'Windows':
         window.iconbitmap(os.path.join('imgs', 'logo.ico'))
 
@@ -707,17 +718,17 @@ if __name__ == '__main__':
     # Let The Fun Begin...
     if not os.path.exists(os.path.join('data', 'nft.bat')):
         print('first run')
-        init_default_config()
         try:
             os.mkdir('data')
             with open(os.path.join('data', 'nft.bat'), 'w') as file:
                 pass
+            init_default_config()
         except Exception as e:
             print(e)
 
     win = tk.Tk()
     set_icon(win)
-    img = ImageTk.PhotoImage(Image.open(os.path.join('imgs', 'img.png')))
+    img = ImageTk.PhotoImage(Image.open(os.path.join('imgs', 'img.PNG')))
     clickImg = ImageTk.PhotoImage(Image.open(os.path.join('imgs', 'clicks.png')))
     updateImg = ImageTk.PhotoImage(Image.open(os.path.join('imgs', 'update.png')))
     resetImg = ImageTk.PhotoImage(Image.open(os.path.join('imgs', 'reset.png')))
