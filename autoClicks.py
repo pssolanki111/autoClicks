@@ -1,6 +1,7 @@
 # ============================================================== #
 import os
-import threading as th, time
+import threading as th
+import time
 import tkinter as tk
 import tkinter.ttk as ttk
 from pynput.mouse import Button, Controller
@@ -12,7 +13,6 @@ from random import randint
 from platform import system
 from webbrowser import open as web_open
 from typing import Tuple
-# import tooltiptk1 as tttk
 
 # ============================================================== #
 # Declarations                                                   #
@@ -294,8 +294,10 @@ class GUI:
         :param args: Just a filler to handle the event passed in by tcl on _button_press event
         :return: You know this already, don't you? of course it's None :D
         """
-        print('reset called manually')
         init_default_config(nt=1)
+        msg.showinfo('Please perform a relaunch', 'It is recommended to perform a restart after resetting the '
+                                                  'preferences. Please close the software and relaunch...')
+        os._exit(0)
 
     def choose_different_hotkey(self) -> None:
         """
@@ -435,8 +437,6 @@ class GUI:
         :return: Nope
         """
         with shl.open(os.path.join('data', 'config')) as config:
-            print('config already: ', dict(config))
-
             config['user'] = {'hotkey': self.hotkey,
                               'key': self.key,
                               'cps': int(self.cps.get()),
@@ -445,8 +445,6 @@ class GUI:
                               'limit': int(self.limit.get()),
                               'vary': int(self.vary.get()),
                               'unlimited': int(self.unlimited.get())}
-
-            print('config after changed: ', dict(config))
 
     def click_limit_changed(self, newLimit: str) -> None:
         """
@@ -509,7 +507,6 @@ class MouseClicks(th.Thread):
 
                 if vary:
                     # varying CPS
-                    print('varying cps applied')
                     cps_s = randint(5, 200)
                     self.mouse.click(getattr(Button, key))
                     time.sleep(float(1 / cps_s))
@@ -517,36 +514,30 @@ class MouseClicks(th.Thread):
 
                     if limited:
                         # there is a limit
-                        print('limited. varying')
                         if gui.counter.get() >= int(limit):  # Limit Reached
-                            print('limited. varying. gotta stop')
                             self.stop_clicks()
 
                     continue
 
                 elif unlimited:
                     # Unlimited CPS.
-                    print('unlimited cps detected')
                     self.mouse.click(getattr(Button, gui.key))
                     gui.counter.set(gui.counter.get() + 1)
 
                     if limited:
                         # There is a limit
                         if gui.counter.get() >= int(limit):  # limit reached
-                            print('unlimited. gotta stop')
                             self.stop_clicks()
 
                     continue
 
                 # Normal clicks
                 self.mouse.click(getattr(Button, key))
-                print('normal clicks')
                 time.sleep(float(1 / int(cps)))
                 gui.counter.set(gui.counter.get() + 1)
 
                 if limited:
                     if gui.counter.get() >= int(limit):
-                        print('normal clicks. gotta stop')
                         self.stop_clicks()
 
             time.sleep(0.5)
@@ -569,7 +560,7 @@ def key_pressed(key, listen: Listener, theGUI: GUI, clickTh: MouseClicks) -> Non
         elif not clickTh.running:
             clickTh.start_clicks()
     else:
-        print('no hotkey. pressed: ', key)
+        pass
 
 # ============================================================== #
 
@@ -581,7 +572,6 @@ def worker(theGUI: GUI, clickTh: MouseClicks) -> None:
     :param clickTh: An instance of class MouseClicks
     :return:
     """
-    print('worker starts')
     global listener
     with Listener(on_press=lambda event: key_pressed(event, listener, theGUI, clickTh)) as listener:
         listener.join()
@@ -601,10 +591,8 @@ def key_held(key) -> None:
     if key == gui.hotkey:
         held = 1
         if clickThread.running:
-            print('already clicking')
             pass
         else:
-            print('starting clicks')
             clickThread.start_clicks()
 
 
@@ -621,7 +609,6 @@ def key_released(key) -> None:
 
     if key == gui.hotkey:
         if held:
-            print('key released. stopping')
             clickThread.stop_clicks()
 
 
@@ -717,14 +704,13 @@ defaultConfig = {'hotkey': Key.f7,
 if __name__ == '__main__':
     # Let The Fun Begin...
     if not os.path.exists(os.path.join('data', 'nft.bat')):
-        print('first run')
         try:
             os.mkdir('data')
             with open(os.path.join('data', 'nft.bat'), 'w') as file:
                 pass
             init_default_config()
         except Exception as e:
-            print(e)
+            pass
 
     win = tk.Tk()
     set_icon(win)
