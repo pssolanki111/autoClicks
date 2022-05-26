@@ -64,10 +64,9 @@ def on_press(key):
 def on_release(key):
     global held
     print('Key: ', key, ' was released')
-    if key == start_stop_key:
-        if held:
-            print('key released. stopping')
-            click_thread.stop_clicking()
+    if key == start_stop_key and held:
+        print('key released. stopping')
+        click_thread.stop_clicking()
 
 
 with Listener(on_press=on_press, on_release=on_release) as listener:
