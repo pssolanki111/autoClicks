@@ -62,7 +62,6 @@ def on_press(key):
 
 
 def on_release(key):
-    global held
     print('Key: ', key, ' was released')
     if key == start_stop_key and held:
         print('key released. stopping')

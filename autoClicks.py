@@ -309,7 +309,6 @@ class GUI:
             executes when user cancels the selection of a new hotkey
             :return: Why the flip would it return anything 👀 ?
             """
-            global listener
             keyName = self.hotkey.name if isinstance(self.hotkey, Key) else self.hotkey
             self.chooseKeyButton.config(text='Choose Button', command=self.choose_different_hotkey)
             self.hotkeyButton.config(text=keyName)
@@ -367,7 +366,6 @@ class GUI:
         :param mode: The new mode selected
         :return: None
         """
-        global listener, clickThread
 
         hotkey, cps, mode_s, limited, limit, vary, unlimited, key = get_config()
 
@@ -499,7 +497,6 @@ class MouseClicks(th.Thread):
         Run method for th.Thread instance. Performs the clicks based on keyBoard events received from Listeners
         :return: None
         """
-        global gui
         while 1:
             while self.running:
                 # logging.warn('clicking left now')
@@ -585,7 +582,6 @@ def key_held(key) -> None:
     :param key: The Key Pressed. Must be an instance of pynput.keyboard.Key or pynput.keyboard.KeyCode
     :return: None
     """
-    global held, clickThread, gui
 
     if key == gui.hotkey:
         held = 1
@@ -604,7 +600,6 @@ def key_released(key) -> None:
     :param key: The Key Released. Must be an instance of pynput.keyboard.Key or pynput.keyboard.KeyCode
     :return: Obviously None LoL
     """
-    global held, clickThread, gui
 
     if key == gui.hotkey and held:
         clickThread.stop_clicks()
