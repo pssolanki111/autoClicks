@@ -536,9 +536,8 @@ class MouseClicks(th.Thread):
                 time.sleep(float(1 / int(cps)))
                 gui.counter.set(gui.counter.get() + 1)
 
-                if limited:
-                    if gui.counter.get() >= int(limit):
-                        self.stop_clicks()
+                if limited and gui.counter.get() >= int(limit):
+                    self.stop_clicks()
 
             time.sleep(0.5)
 
@@ -607,9 +606,8 @@ def key_released(key) -> None:
     """
     global held, clickThread, gui
 
-    if key == gui.hotkey:
-        if held:
-            clickThread.stop_clicks()
+    if key == gui.hotkey and held:
+        clickThread.stop_clicks()
 
 
 # ============================================================== #
