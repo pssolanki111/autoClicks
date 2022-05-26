@@ -513,7 +513,7 @@ class MouseClicks(th.Thread):
 
                     continue
 
-                elif unlimited:
+                if unlimited:
                     # Unlimited CPS.
                     self.mouse.click(getattr(Button, gui.key))
                     gui.counter.set(gui.counter.get() + 1)
