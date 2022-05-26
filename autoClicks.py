@@ -35,7 +35,6 @@ class GUI:
 
         self.root = root
         self.root.title('SpeedAutoClicker')
-        # self.root.geometry('940x350+10+10')
         self.root.resizable(0, 0)
         self.root.config(bg='#1b2029')
 
@@ -473,7 +472,6 @@ class MouseClicks(th.Thread):
         :param mouse: An instance of class pynput.mouse.Controller
         """
         super(MouseClicks, self).__init__()
-        # theGUI.cps_val = float(1 / int(theGUI.cps.get()))
         self.running = False
         self.mouse = mouse
         self.daemon = True
@@ -499,7 +497,6 @@ class MouseClicks(th.Thread):
         """
         while 1:
             while self.running:
-                # logging.warn('clicking left now')
                 hotkey, cps, mode, limited, limit, vary, unlimited, key = get_config()
 
                 if vary:
@@ -628,7 +625,6 @@ def set_icon(window: tk.Tk) -> None:
     :return: None
     """
     if system() == 'Linux':
-        # window.iconbitmap(os.path.join('imgs', 'logo.xbm'))
         logo = tk.Image('photo', file=os.path.join('imgs', 'img.PNG'))
         window.tk.call('wm', 'iconphoto', window._w, logo)
     elif system() == 'Windows':
